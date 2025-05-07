@@ -3,8 +3,8 @@ import streamlit as st
 import pandas as pd
 from difflib import SequenceMatcher
 
-st.set_page_config(page_title="🔍 Busca de Temas por Modo", page_icon="📘")
-st.title("📘 Busca de Temas por Modo Específico")
+st.set_page_config(page_title="📘 Temas já produzidos anteriormente", page_icon="📘")
+st.title("📘 Temas já produzidos anteriormente")
 
 st.markdown("""
 Este app permite buscar temas de três maneiras distintas, cada uma com seu próprio campo:
