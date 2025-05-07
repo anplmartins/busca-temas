@@ -2,69 +2,68 @@
 import streamlit as st
 import pandas as pd
 from difflib import SequenceMatcher
-import gspread
-from google.oauth2.service_account import Credentials
 
-# Configurações
-SCOPE = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-SPREADSHEET_ID = '1W3SXFXuUtbYbvYN5xJBzGZVbxEA9iXx5ZQDVSv6SkSg'
+st.set_page_config(page_title="Consulta de Temas por UF", page_icon="📄")
 
-# Autenticação
-creds = Credentials.from_service_account_file('credentials.json', scopes=SCOPE)
-gc = gspread.authorize(creds)
-sh = gc.open_by_key(SPREADSHEET_ID)
+st.title("📄 Consulta de Temas por UF")
+st.markdown("Selecione a UF e o ciclo para consultar os temas já produzidos.")
 
-# Função para detectar qual linha contém o cabeçalho
-def get_header_and_data(worksheet):
-    rows = worksheet.get_all_values()
-    for i in range(2):  # verificar as duas primeiras linhas
-        if "título" in [cell.lower() for cell in rows[i]]:
-            header = rows[i]
-            data = rows[i + 1:]
-            df = pd.DataFrame(data, columns=header)
-            return df
-    return pd.DataFrame()
+# Dicionário de abas e GIDs
+abas = {
+    'RS25-26': '0',
+    'RS24-25': '115275239',
+    'RS23-24': '2138405098',
+    'RS22-23': '1420824130',
+    'SP24-25': '205733653',
+    'SP23-24': '205552520',
+    'SP22-23': '80889',
+    'SP21-22': '1993459611',
+}
 
-# Consolidar temas por UF
-uf_temas = {}
-for ws in sh.worksheets():
-    title = ws.title
-    if len(title) >= 7 and title[:2].isalpha():
-        uf = title[:2]
-        df = get_header_and_data(ws)
-        if "Título" in df.columns:
-            temas = df["Título"].dropna().astype(str).tolist()
-            if uf not in uf_temas:
-                uf_temas[uf] = []
-            uf_temas[uf].extend(temas)
+sheet_id = '1W3SXFXuUtbYbvYN5xJBzGZVbxEA9iXx5ZQDVSv6SkSg'
 
-# Função de similaridade
-def similarity(a, b):
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+# Seleção da aba
+aba = st.selectbox("Selecione o ciclo:", list(abas.keys()))
+gid = abas[aba]
+csv_url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
 
-def find_similar_titles(input_title, uf, threshold=0.6):
-    temas = uf_temas.get(uf, [])
-    similares = []
-    for tema in temas:
-        score = similarity(input_title, tema)
-        if score >= threshold:
-            similares.append((tema, round(score * 100, 1)))
-    similares.sort(key=lambda x: x[1], reverse=True)
-    return similares
+@st.cache_data
+def carregar_dados(url):
+    try:
+        df = pd.read_csv(url)
+        return df
+    except Exception as e:
+        return None
 
-# Interface
-st.set_page_config(page_title="Busca de Temas por Similaridade", page_icon="🔍")
-st.title("🔍 Busca de Temas por Similaridade")
-st.markdown("Consulte se um tema (ou algo parecido) já foi feito para o Sebrae da UF selecionada.")
+df = carregar_dados(csv_url)
 
-uf = st.selectbox("Selecione a UF:", sorted(uf_temas.keys()))
-tema_novo = st.text_input("Digite o novo tema:")
+if df is not None:
+    # Detecta a coluna "Título"
+    titulo_col = [col for col in df.columns if "título" in col.lower()]
+    if titulo_col:
+        st.success(f"Tema(s) encontrados na aba {aba}.")
+        col = titulo_col[0]
+        temas = df[col].dropna().astype(str).tolist()
+        tema_input = st.text_input("Digite o novo tema para verificar similaridade:")
 
-if tema_novo and uf:
-    resultados = find_similar_titles(tema_novo, uf)
-    if resultados:
-        st.subheader(f"Temas similares já feitos para {uf}:")
-        for item in resultados:
-            st.markdown(f"- **{item[0]}** — Similaridade: {item[1]}%")
+        def similaridade(a, b):
+            return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
+        if tema_input:
+            resultados = []
+            for tema in temas:
+                score = round(similaridade(tema_input, tema) * 100, 1)
+                if score >= 50:
+                    resultados.append((tema, score))
+            resultados.sort(key=lambda x: x[1], reverse=True)
+
+            if resultados:
+                st.subheader("Temas semelhantes encontrados:")
+                for t, s in resultados:
+                    st.markdown(f"- **{t}** — Similaridade: {s}%")
+            else:
+                st.info("Nenhum tema semelhante encontrado.")
     else:
-        st.success("✅ Nenhum tema semelhante encontrado para esta UF.")
+        st.warning("Não foi possível localizar a coluna 'Título' nesta aba.")
+else:
+    st.error("Erro ao carregar os dados da planilha.")
