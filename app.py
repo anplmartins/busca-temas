@@ -50,7 +50,7 @@ if tema_input:
     resultados = []
     for _, row in temas_df.iterrows():
         score = round(similaridade(tema_input, row["Tema"]) * 100, 1)
-        if score >= 50:
+        if score >= 30:
             resultados.append((row["UF_Ciclo"], row["Tema"], score))
     resultados.sort(key=lambda x: x[2], reverse=True)
 
