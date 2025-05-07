@@ -3,11 +3,22 @@ import streamlit as st
 import pandas as pd
 from difflib import SequenceMatcher
 
-st.set_page_config(page_title="Busca de Temas em Todas as UFs", page_icon="🔎")
-st.title("🔎 Busca de Temas em Todas as UFs")
-st.markdown("Digite um novo tema e veja se ele (ou algo semelhante) já foi produzido em qualquer UF/ciclo.")
+st.set_page_config(page_title="🔍 Busca Inteligente de Temas", page_icon="📘")
+st.title("📘 Busca Inteligente de Temas com Filtros")
 
-# Dicionário de abas e GIDs
+st.markdown("""
+Você pode digitar um tema e consultar os resultados com **três métodos diferentes**, exibidos lado a lado:
+
+- 🔹 **Frase exata**: Encontre temas que contenham exatamente o texto digitado.  
+  Exemplo: `"MEI para ME"` → retorna apenas temas com essa frase exata, na mesma ordem.
+
+- 🔸 **Contém todas (AND)**: Encontre temas que incluam **todas as palavras digitadas**, em qualquer ordem.  
+  Exemplo: `MEI AND marketing` → retorna temas que contenham tanto "MEI" quanto "marketing".
+
+- 🔺 **Similaridade ≥ 40%**: Compara seu texto com todos os temas, mesmo com variações, e retorna os mais parecidos.  
+  Exemplo: `Transformar MEI` → pode retornar "Quando migrar de MEI para ME?" ou "MEI e transição para ME".
+""", unsafe_allow_html=True)
+
 abas = {
     'RS25-26': '0',
     'RS24-25': '115275239',
@@ -22,41 +33,78 @@ abas = {
 sheet_id = '1W3SXFXuUtbYbvYN5xJBzGZVbxEA9iXx5ZQDVSv6SkSg'
 
 @st.cache_data
-def carregar_temas_de_todas_as_abas():
-    temas_por_aba = []
+def carregar_temas():
+    todos = []
     for nome_aba, gid in abas.items():
         url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
-        for header_row in [1, 2]:
+        for header_row in [0, 1, 2]:
             try:
                 df = pd.read_csv(url, header=header_row)
-                titulo_col = [col for col in df.columns if "título" in col.lower()]
-                if titulo_col:
-                    col = titulo_col[0]
-                    for tema in df[col].dropna().astype(str):
-                        temas_por_aba.append({"UF_Ciclo": nome_aba, "Tema": tema})
+                col_titulo = [c for c in df.columns if "título" in c.lower()]
+                if col_titulo:
+                    col = col_titulo[0]
+                    for t in df[col].dropna().astype(str):
+                        todos.append({"UF_Ciclo": nome_aba, "Tema": t})
                     break
             except:
                 continue
-    return pd.DataFrame(temas_por_aba)
+    return pd.DataFrame(todos)
 
-temas_df = carregar_temas_de_todas_as_abas()
+temas_df = carregar_temas()
 
 def similaridade(a, b):
     return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
-tema_input = st.text_input("Digite o novo tema:")
+entrada = st.text_input("Digite um tema para buscar:")
 
-if tema_input:
-    resultados = []
+if entrada:
+    entrada = entrada.strip()
+    termo_exato = entrada.lower().strip('"')
+    palavras_and = [p.strip().lower() for p in entrada.upper().split("AND")]
+    
+    exato = []
+    and_results = []
+    similares = []
+
     for _, row in temas_df.iterrows():
-        score = round(similaridade(tema_input, row["Tema"]) * 100, 1)
-        if score >= 30:
-            resultados.append((row["UF_Ciclo"], row["Tema"], score))
-    resultados.sort(key=lambda x: x[2], reverse=True)
+        tema = row["Tema"]
+        tema_l = tema.lower()
+        
+        # Busca exata com aspas
+        if termo_exato in tema_l:
+            exato.append((row["UF_Ciclo"], tema))
+        
+        # Busca com AND
+        if all(p.lower() in tema_l for p in palavras_and):
+            and_results.append((row["UF_Ciclo"], tema))
+        
+        # Similaridade ≥ 40%
+        score = round(similaridade(entrada, tema) * 100, 1)
+        if score >= 40:
+            similares.append((row["UF_Ciclo"], tema, score))
 
-    if resultados:
-        st.subheader("Temas semelhantes encontrados:")
-        for uf, tema, score in resultados:
-            st.markdown(f"- **{uf}** → _{tema}_ — Similaridade: **{score}%**")
-    else:
-        st.info("Nenhum tema semelhante encontrado em nenhuma aba.")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.subheader("🔹 Frase exata")
+        if exato:
+            for uf, t in exato:
+                st.markdown(f"- **{uf}** → _{t}_")
+        else:
+            st.markdown("*Nenhum encontrado*")
+
+    with col2:
+        st.subheader("🔸 Contém todas (AND)")
+        if and_results:
+            for uf, t in and_results:
+                st.markdown(f"- **{uf}** → _{t}_")
+        else:
+            st.markdown("*Nenhum encontrado*")
+
+    with col3:
+        st.subheader("🔺 Similaridade (≥40%)")
+        if similares:
+            for uf, t, s in sorted(similares, key=lambda x: x[2], reverse=True):
+                st.markdown(f"- **{uf}** → _{t}_ — {s}%")
+        else:
+            st.markdown("*Nenhum encontrado*")
