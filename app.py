@@ -3,10 +3,9 @@ import streamlit as st
 import pandas as pd
 from difflib import SequenceMatcher
 
-st.set_page_config(page_title="Consulta de Temas por UF", page_icon="📄")
-
-st.title("📄 Consulta de Temas por UF")
-st.markdown("Selecione a UF e o ciclo para consultar os temas já produzidos.")
+st.set_page_config(page_title="Busca de Temas em Todas as UFs", page_icon="🔎")
+st.title("🔎 Busca de Temas em Todas as UFs")
+st.markdown("Digite um novo tema e veja se ele (ou algo semelhante) já foi produzido em qualquer UF/ciclo.")
 
 # Dicionário de abas e GIDs
 abas = {
@@ -22,48 +21,42 @@ abas = {
 
 sheet_id = '1W3SXFXuUtbYbvYN5xJBzGZVbxEA9iXx5ZQDVSv6SkSg'
 
-# Seleção da aba
-aba = st.selectbox("Selecione o ciclo:", list(abas.keys()))
-gid = abas[aba]
-csv_url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
-
 @st.cache_data
-def carregar_dados(url):
-    try:
-        df = pd.read_csv(url)
-        return df
-    except Exception as e:
-        return None
+def carregar_temas_de_todas_as_abas():
+    temas_por_aba = []
+    for nome_aba, gid in abas.items():
+        url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
+        for header_row in [1, 2]:
+            try:
+                df = pd.read_csv(url, header=header_row)
+                titulo_col = [col for col in df.columns if "título" in col.lower()]
+                if titulo_col:
+                    col = titulo_col[0]
+                    for tema in df[col].dropna().astype(str):
+                        temas_por_aba.append({"UF_Ciclo": nome_aba, "Tema": tema})
+                    break
+            except:
+                continue
+    return pd.DataFrame(temas_por_aba)
 
-df = carregar_dados(csv_url)
+temas_df = carregar_temas_de_todas_as_abas()
 
-if df is not None:
-    # Detecta a coluna "Título"
-    titulo_col = [col for col in df.columns if "título" in col.lower()]
-    if titulo_col:
-        st.success(f"Tema(s) encontrados na aba {aba}.")
-        col = titulo_col[0]
-        temas = df[col].dropna().astype(str).tolist()
-        tema_input = st.text_input("Digite o novo tema para verificar similaridade:")
+def similaridade(a, b):
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
-        def similaridade(a, b):
-            return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+tema_input = st.text_input("Digite o novo tema:")
 
-        if tema_input:
-            resultados = []
-            for tema in temas:
-                score = round(similaridade(tema_input, tema) * 100, 1)
-                if score >= 50:
-                    resultados.append((tema, score))
-            resultados.sort(key=lambda x: x[1], reverse=True)
+if tema_input:
+    resultados = []
+    for _, row in temas_df.iterrows():
+        score = round(similaridade(tema_input, row["Tema"]) * 100, 1)
+        if score >= 50:
+            resultados.append((row["UF_Ciclo"], row["Tema"], score))
+    resultados.sort(key=lambda x: x[2], reverse=True)
 
-            if resultados:
-                st.subheader("Temas semelhantes encontrados:")
-                for t, s in resultados:
-                    st.markdown(f"- **{t}** — Similaridade: {s}%")
-            else:
-                st.info("Nenhum tema semelhante encontrado.")
+    if resultados:
+        st.subheader("Temas semelhantes encontrados:")
+        for uf, tema, score in resultados:
+            st.markdown(f"- **{uf}** → _{tema}_ — Similaridade: **{score}%**")
     else:
-        st.warning("Não foi possível localizar a coluna 'Título' nesta aba.")
-else:
-    st.error("Erro ao carregar os dados da planilha.")
+        st.info("Nenhum tema semelhante encontrado em nenhuma aba.")
