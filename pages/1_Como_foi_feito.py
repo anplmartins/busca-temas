@@ -28,6 +28,7 @@ Ela possui várias abas, uma por UF e ciclo contratual.
 | SP23-24   | 205552520   | SEBRAE SP 2023–2024 |
 | SP22-23   | 80889       | SEBRAE SP 2022–2023 |
 | SP21-22   | 1993459611  | SEBRAE SP 2021–2022 |
+| POLO-23-24   | 2038651538  | SEBRAE POLO 2023–2024 |
 
 ---
 
