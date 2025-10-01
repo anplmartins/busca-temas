@@ -23,7 +23,7 @@ abas = {
     'SP23-24': '205552520',
     'SP22-23': '80889',
     'SP21-22': '1993459611',
-    'POLO23-24': '2038651538',
+    'POLO23-24': '2038651538'
 }
 
 sheet_id = '1W3SXFXuUtbYbvYN5xJBzGZVbxEA9iXx5ZQDVSv6SkSg'
