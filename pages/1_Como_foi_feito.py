@@ -5,7 +5,7 @@ st.set_page_config(page_title="ℹ️ Como o app foi construído", page_icon="�
 
 st.title("ℹ️ Como o app foi construído")
 st.markdown("""
-Este app foi desenvolvido para facilitar a consulta de temas **já produzidos** pelos SEBRAEs das UFs **RS** e **SP**.
+Este app foi desenvolvido para facilitar a consulta de temas **já produzidos** pelos SEBRAEs das UFs **RS**, **SP**, **POLO** R **MS**.
 
 ---
 
@@ -24,12 +24,17 @@ Ela possui várias abas, uma por UF e ciclo contratual.
 | RS24-25   | 115275239   | SEBRAE RS 2024–2025 |
 | RS23-24   | 2138405098  | SEBRAE RS 2023–2024 |
 | RS22-23   | 1420824130  | SEBRAE RS 2022–2023 |
+| SP25-26   | 1513429512  | SEBRAE SP 2025–2026 |            
 | SP24-25   | 205733653   | SEBRAE SP 2024–2025 |
 | SP23-24   | 205552520   | SEBRAE SP 2023–2024 |
 | SP22-23   | 80889       | SEBRAE SP 2022–2023 |
 | SP21-22   | 1993459611  | SEBRAE SP 2021–2022 |
-| POLO-23-24   | 2038651538  | SEBRAE POLO 2023–2024 |
-
+| POLO-23-24   | 2038651538 | SEBRAE POLO 2023–2024 |
+| POLO-25-26   | 105220454  | SEBRAE POLO 2025–2026 |
+| MS-22-23   | 760527987  | SEBRAE MS 2022–2023 |
+| MS-23-24   | 1270353981  | SEBRAE MS 2023–2024 |
+| MS-24-25   | 410127937  | SEBRAE MS 2024–2024 |
+| MS-25-26   | 1754281433  | SEBRAE MS 2025–2026 |
 ---
 
 ### 🔍 Funcionalidades:

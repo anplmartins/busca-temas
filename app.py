@@ -3,8 +3,8 @@ import streamlit as st
 import pandas as pd
 from difflib import SequenceMatcher
 
-st.set_page_config(page_title="📘 Temas já produzidos anteriormente", page_icon="📘")
-st.title("📘 Temas já produzidos anteriormente")
+st.set_page_config(page_title="📘 Busca de temas", page_icon="📘")
+st.title("📘 Busca de temas")
 
 st.markdown("""
 Este app permite buscar temas de três maneiras distintas, cada uma com seu próprio campo:
@@ -19,11 +19,17 @@ abas = {
     'RS24-25': '115275239',
     'RS23-24': '2138405098',
     'RS22-23': '1420824130',
+    'SP25-26': '1513429512',
     'SP24-25': '205733653',
     'SP23-24': '205552520',
     'SP22-23': '80889',
     'SP21-22': '1993459611',
-    'POLO23-24': '2038651538'
+    'POLO25-26': '105220454',
+    'POLO23-24': '2038651538',
+    'MS22-23': '760527987',
+    'MS23-24': '1270353981',
+    'MS24-25': '410127937',
+    'MS25-26': '1754281433'
 }
 
 sheet_id = '1W3SXFXuUtbYbvYN5xJBzGZVbxEA9iXx5ZQDVSv6SkSg'
