@@ -77,7 +77,7 @@ def carregar_index():
     df = pd.read_csv(url)
     return dict(zip(df["UF_Ciclo"], df["GID"]))
 
-@st.cache_data
+@st.cache_data(ttl=300)
 def carregar_dados():
     registros = []
     abas = carregar_index()
