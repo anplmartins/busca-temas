@@ -72,7 +72,7 @@ def carregar_index():
 
 abas = carregar_index()
 
-@st.cache_data
+@st.cache_data(ttl=300)
 def carregar_temas():
     registros = []
 
